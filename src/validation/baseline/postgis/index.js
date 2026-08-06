@@ -6,7 +6,7 @@ import { ERROR_CODES } from '../errors.js'
 import { ERROR_BUILDERS } from './error-builders.js'
 import { createLogger } from '../../../common/helpers/logging/logger.js'
 import {
-  logPerfEvidence,
+  logPerf,
   perfNow,
   utf8Bytes
 } from '../../../common/helpers/perf-evidence.js'
@@ -504,7 +504,7 @@ export async function validateBaselineLayersPostgis(pool, layers) {
   // Evidence (Item 7 — geometries re-serialized to JSON three times): this is
   // the first of the three sites — the validation param array. serializedBytes
   // is the payload of geometry text shipped to Postgres for the checks.
-  logPerfEvidence(logger, 'geom-serialized-thrice', {
+  logPerf(logger, 'geom-serialized-thrice', {
     stage: 'validate',
     featureCount: geoms.length,
     serializedBytes: utf8Bytes(geoms)
@@ -524,7 +524,7 @@ export async function validateBaselineLayersPostgis(pool, layers) {
   // Evidence (Item 6 — heavy PostGIS validation is one giant inline statement):
   // every geometry check runs as a single awaited query with repeated
   // ST_MakeValid / ST_Union / overlay work across all layers.
-  logPerfEvidence(logger, 'postgis-inline-heavy-query', {
+  logPerf(logger, 'postgis-inline-heavy-query', {
     totalFeatures: geoms.length,
     queryMs
   })
@@ -533,7 +533,7 @@ export async function validateBaselineLayersPostgis(pool, layers) {
   // overlap CTE joins the `areas` parcels against themselves, so Postgres
   // evaluates ~N^2/2 candidate pairs with no GiST index — quadratic in parcels.
   const areaFeatureCount = layerNames.filter((name) => name === 'areas').length
-  logPerfEvidence(logger, 'parcel-overlap-on2', {
+  logPerf(logger, 'parcel-overlap-on2', {
     areaFeatureCount,
     estimatedOverlapPairs: (areaFeatureCount * (areaFeatureCount - 1)) / 2,
     queryMs

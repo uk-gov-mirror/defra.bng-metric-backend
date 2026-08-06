@@ -1,6 +1,6 @@
 import { createLogger } from '../../common/helpers/logging/logger.js'
 import {
-  logPerfEvidence,
+  logPerf,
   perfNow,
   utf8Bytes
 } from '../../common/helpers/perf-evidence.js'
@@ -119,7 +119,7 @@ async function calculateHabitatSizes(pool, layers) {
 
   // Evidence (Item 7 — geometries re-serialized to JSON three times): second of
   // the three sites — the sizing param array re-stringifies the same geometries.
-  logPerfEvidence(logger, 'geom-serialized-thrice', {
+  logPerf(logger, 'geom-serialized-thrice', {
     stage: 'sizing',
     featureCount: geoms.length,
     serializedBytes: utf8Bytes(geoms)
@@ -135,7 +135,7 @@ async function calculateHabitatSizes(pool, layers) {
   // Evidence (Item 6 — the union work overlaps a second PostGIS pass): this
   // sizing query is a separate round trip that recomputes ST_MakeValid per
   // feature, duplicating validation's geometry-repair work.
-  logPerfEvidence(logger, 'postgis-sizing-query', {
+  logPerf(logger, 'postgis-sizing-query', {
     featureCount: geoms.length,
     queryMs: Math.round(perfNow() - queryStart)
   })

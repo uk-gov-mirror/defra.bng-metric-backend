@@ -20,7 +20,7 @@ import { users, relationships, roles } from './schema/index.js'
 import { insertLoginAudit } from './persist-login-audit.js'
 import { parseRelationships, parseRoles } from '../services/defra-id/claims.js'
 import { createLogger } from '../common/helpers/logging/logger.js'
-import { logPerfEvidence, perfNow } from '../common/helpers/perf-evidence.js'
+import { logPerf, perfNow } from '../common/helpers/perf-evidence.js'
 
 const logger = createLogger()
 
@@ -127,7 +127,7 @@ async function persistSession(drizzle, claims) {
   // PII-safety note at the top of this file). ONE_ROUND_TRIP covers the single
   // user upsert and the single audit insert that bracket the loops.
   const BRACKETING_ROUND_TRIPS = 2
-  logPerfEvidence(logger, 'login-serial-upserts', {
+  logPerf(logger, 'login-serial-upserts', {
     relationshipCount: rels.length,
     roleCount: userRoles.length,
     upsertRoundTrips: BRACKETING_ROUND_TRIPS + rels.length + userRoles.length,

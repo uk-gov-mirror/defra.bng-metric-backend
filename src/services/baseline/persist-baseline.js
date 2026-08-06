@@ -18,7 +18,7 @@ import {
 } from '../../db/schema/index.js'
 import { setProjectHabitatData } from '../../db/persist-project.js'
 import { EPSG_BNG } from '../../validation/baseline/geopackage-constants.js'
-import { logPerfEvidence } from '../../common/helpers/perf-evidence.js'
+import { logPerf } from '../../common/helpers/perf-evidence.js'
 
 /** Cap rows per INSERT to keep statement size bounded for PostGIS bulk loads. */
 const INSERT_BATCH_SIZE = 500
@@ -260,7 +260,7 @@ async function persistBaseline(
   // Evidence (Item 7 — geometries re-serialized to JSON three times): third and
   // final site — every geometry is JSON.stringify'd again per row on persist.
   // serializedBytes is the geometry text shipped to Postgres for the inserts.
-  logPerfEvidence(logger, 'geom-serialized-thrice', {
+  logPerf(logger, 'geom-serialized-thrice', {
     stage: 'persist',
     featureCount: serStats.count,
     serializedBytes: serStats.bytes

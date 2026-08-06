@@ -20,10 +20,7 @@ import {
   distinctivenessScores
 } from './habitat-distinctiveness.js'
 import { createLogger } from '../../../common/helpers/logging/logger.js'
-import {
-  logPerfEvidence,
-  perfNow
-} from '../../../common/helpers/perf-evidence.js'
+import { logPerf, perfNow } from '../../../common/helpers/perf-evidence.js'
 
 const logger = createLogger()
 
@@ -128,7 +125,7 @@ function getAreaBroadHabitats() {
   // headers): this Set build + sort over static, per-build data runs on every
   // call. The /reference/* route handlers set no Cache-Control/ETag, so the
   // work repeats per request (buildMicros = microseconds for one rebuild).
-  logPerfEvidence(logger, 'reference-recompute', {
+  logPerf(logger, 'reference-recompute', {
     getter: 'areaBroadHabitats',
     resultCount: result.length,
     buildMicros: Math.round((perfNow() - start) * 1000)
@@ -184,7 +181,7 @@ function getAreaHabitatTypesByBroad() {
   // Evidence (Item W5 — reference lookups recompute per request): the full
   // group-by + per-broad sort is rebuilt on every /reference/habitat-types-by-
   // broad call, with no response cache headers to let clients skip it.
-  logPerfEvidence(logger, 'reference-recompute', {
+  logPerf(logger, 'reference-recompute', {
     getter: 'areaHabitatTypesByBroad',
     resultCount: Object.keys(grouped).length,
     buildMicros: Math.round((perfNow() - start) * 1000)

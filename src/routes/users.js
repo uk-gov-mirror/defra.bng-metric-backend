@@ -2,11 +2,7 @@ import { asc, desc, sql } from 'drizzle-orm'
 import Joi from 'joi'
 import { projects } from '../db/schema/index.js'
 import { visibleToUser } from '../db/project-visibility.js'
-import {
-  logPerfEvidence,
-  perfNow,
-  utf8Bytes
-} from '../common/helpers/perf-evidence.js'
+import { logPerf, perfNow, utf8Bytes } from '../common/helpers/perf-evidence.js'
 
 const orderDirections = { asc, desc }
 
@@ -88,7 +84,7 @@ const getUserProjects = {
     // Evidence (Item W2 — no index on projects.user_id): the list filters on
     // user_id with no supporting index (only the id PK exists), so this is a
     // sequential scan whose queryMs grows with the projects table size.
-    logPerfEvidence(request.logger, 'projects-user-id-seqscan', {
+    logPerf(request.logger, 'projects-user-id-seqscan', {
       rowCount: rows.length,
       queryMs
     })
@@ -96,7 +92,7 @@ const getUserProjects = {
     // visible project's full metric document is selected (no projection, no
     // limit). responseBytes is what gets shipped to and re-parsed by the
     // frontend, though the list view needs only id/name/timestamps.
-    logPerfEvidence(request.logger, 'project-list-full-jsonb', {
+    logPerf(request.logger, 'project-list-full-jsonb', {
       rowCount: rows.length,
       responseBytes: utf8Bytes(JSON.stringify(rows))
     })
@@ -104,7 +100,7 @@ const getUserProjects = {
     // project->>'name' cannot use a b-tree index, so it is an unindexed
     // expression sort over the full JSONB rows above.
     if (sort === 'name') {
-      logPerfEvidence(request.logger, 'jsonb-name-sort', {
+      logPerf(request.logger, 'jsonb-name-sort', {
         rowCount: rows.length,
         queryMs
       })

@@ -8,7 +8,7 @@
 // If this instead enforced a cap it would BE the fix; keeping it purely
 // observational is deliberate — the spike wants to measure the problem, not
 // solve it.
-import { logPerfEvidence } from '../common/helpers/perf-evidence.js'
+import { logPerf } from '../common/helpers/perf-evidence.js'
 
 /** Sliding window over which requests are counted, in milliseconds. */
 const WINDOW_MS = 10_000
@@ -47,7 +47,7 @@ function maybeLogBurst(server, request, entry, now) {
     return
   }
   entry.lastLoggedAt = now
-  logPerfEvidence(server.logger, 'no-rate-limit', {
+  logPerf(server.logger, 'no-rate-limit', {
     clientIp: request.info.remoteAddress ?? 'unknown',
     windowRequests: entry.timestamps.length,
     windowMs: WINDOW_MS,

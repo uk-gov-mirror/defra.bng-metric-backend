@@ -11,7 +11,7 @@ import {
 import { HABITAT_STATUS } from '../../services/baseline/calculate-habitat-statuses.js'
 import { stripConditionPrefix } from './condition.js'
 import { summarizeFeatureSetUnitsTotals } from '../features/feature-set-units.js'
-import { logPerfEvidence, perfNow } from '../../common/helpers/perf-evidence.js'
+import { logPerf, perfNow } from '../../common/helpers/perf-evidence.js'
 import {
   SQ_METRES_PER_HECTARE,
   METRES_PER_KM,
@@ -352,7 +352,7 @@ export function enrichBaselineDocumentWithUnits(
   )
 
   summarizeFeatureSetUnitsTotals(baselineDocument)
-  logPerfEvidence(logger, 'enrich-inline-loop', {
+  logPerf(logger, 'enrich-inline-loop', {
     enrichedFeatureCount,
     enrichMs: Math.round(perfNow() - enrichStart)
   })

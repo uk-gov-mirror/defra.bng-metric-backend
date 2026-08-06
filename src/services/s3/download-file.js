@@ -4,7 +4,7 @@ import { config } from '../../config.js'
 import { createS3Client } from './s3-client.js'
 import { createLogger } from '../../common/helpers/logging/logger.js'
 import {
-  logPerfEvidence,
+  logPerf,
   perfNow,
   heapUsedMb
 } from '../../common/helpers/perf-evidence.js'
@@ -91,7 +91,7 @@ async function downloadFile(
     // heapDeltaMb shows how much resident memory one download adds; a few
     // concurrent large uploads multiply this against a single-process instance.
     const heapAfterMb = heapUsedMb()
-    logPerfEvidence(logger, 'file-buffered-memory', {
+    logPerf(logger, 'file-buffered-memory', {
       bytes: buffer.byteLength,
       heapBeforeMb,
       heapAfterMb,

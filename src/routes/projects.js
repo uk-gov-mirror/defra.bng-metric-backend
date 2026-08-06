@@ -10,11 +10,7 @@ import {
   toProjectResponses
 } from '../utilities/project/to-project-response.js'
 import { projectSchema } from '../validation/project.js'
-import {
-  logPerfEvidence,
-  perfNow,
-  utf8Bytes
-} from '../common/helpers/perf-evidence.js'
+import { logPerf, perfNow, utf8Bytes } from '../common/helpers/perf-evidence.js'
 
 /**
  * @openapi
@@ -173,7 +169,7 @@ const getProjects = {
     // of the full metric document per visible project, no projection/limit.
     // Item W2 (unindexed user_id filter) shows as queryMs growing with table
     // size.
-    logPerfEvidence(request.logger, 'project-list-full-jsonb', {
+    logPerf(request.logger, 'project-list-full-jsonb', {
       rowCount: rows.length,
       responseBytes: utf8Bytes(JSON.stringify(rows)),
       queryMs: Math.round(perfNow() - queryStart)
@@ -269,7 +265,7 @@ const getHabitat = {
     // full project JSONB was selected and deserialised just to find() one
     // habitat. docBytes is the whole document shipped from Postgres; only
     // featureBytes is returned to the caller.
-    logPerfEvidence(request.logger, 'single-feature-full-doc', {
+    logPerf(request.logger, 'single-feature-full-doc', {
       habitatCount: habitats.length,
       docBytes: utf8Bytes(JSON.stringify(rows[0].project ?? {})),
       featureBytes: utf8Bytes(JSON.stringify(habitat))

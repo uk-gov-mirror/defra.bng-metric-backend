@@ -30,7 +30,7 @@ import {
   GEOPACKAGE_METRIC,
   VALIDATION_CATEGORY
 } from '../common/helpers/metric-names.js'
-import { logPerfEvidence, perfNow } from '../common/helpers/perf-evidence.js'
+import { logPerf, perfNow } from '../common/helpers/perf-evidence.js'
 
 const logger = createLogger()
 
@@ -167,7 +167,7 @@ async function runFullValidation(
       config.projectDocumentKey
     )
     const afterValidate = perfNow()
-    logPerfEvidence(logger, 'pipeline-inline', {
+    logPerf(logger, 'pipeline-inline', {
       uploadId,
       stage: 'validate',
       fileSizeBytes: fileSize ?? null,
@@ -202,7 +202,7 @@ async function runFullValidation(
       )
       // Evidence (Item 1): sizing + enrichment + persist stage, still inline on
       // the same handler; totalMs is the whole request-handler time.
-      logPerfEvidence(logger, 'pipeline-inline', {
+      logPerf(logger, 'pipeline-inline', {
         uploadId,
         stage: 'save',
         saveMs: Math.round(perfNow() - saveStart),

@@ -62,7 +62,7 @@ function utf8Bytes(value) {
  * @param {string} id spike issue id, e.g. 'pipeline-inline'
  * @param {object} [fields] measured values to attach
  */
-function logPerfEvidence(logger, id, fields = {}) {
+function logPerf(logger, id, fields = {}) {
   if (!logger?.info) {
     return
   }
@@ -70,7 +70,7 @@ function logPerfEvidence(logger, id, fields = {}) {
 }
 
 export {
-  logPerfEvidence,
+  logPerf,
   perfNow,
   heapUsedMb,
   utf8Bytes,

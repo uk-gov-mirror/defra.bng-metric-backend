@@ -29,7 +29,7 @@ import {
   validateHedgerows,
   validateWatercourses
 } from './geopackage-internals.js'
-import { logPerfEvidence, perfNow } from '../../common/helpers/perf-evidence.js'
+import { logPerf, perfNow } from '../../common/helpers/perf-evidence.js'
 
 const logger = createLogger()
 
@@ -111,7 +111,7 @@ function validateGpkg(buffer) {
     // Evidence (Item 5 — file parsed as SQLite twice): first open, of the
     // in-memory buffer, for the format/validation gate. Pairs with the
     // read-tempfile open below; both fire once per upload.
-    logPerfEvidence(logger, 'sqlite-double-open', { stage: 'validate-buffer' })
+    logPerf(logger, 'sqlite-double-open', { stage: 'validate-buffer' })
   } catch (err) {
     // better-sqlite3 does not throw in the constructor for most invalid buffers
     // (it defers the error to the first operation). This catch covers the cases
@@ -370,7 +370,7 @@ function readLayer(db, tableName) {
   // whole table is pulled into memory with .all(), then every blob is decoded to
   // GeoJSON in this synchronous loop. better-sqlite3 is synchronous, so the
   // event loop is blocked for fetchMs + decodeMs, growing with the row count.
-  logPerfEvidence(logger, 'sync-feature-load', {
+  logPerf(logger, 'sync-feature-load', {
     table: tableName,
     rowCount: rows.length,
     featureCount: features.length,
@@ -402,7 +402,7 @@ export function readBaselineGeoPackage(filePath) {
   // the temp-file copy on disk, to read features. The same bytes were already
   // opened once as an in-memory buffer for the validation gate (validateGpkg).
   // See the MERGE NOTE at the top of this file.
-  logPerfEvidence(logger, 'sqlite-double-open', { stage: 'read-tempfile' })
+  logPerf(logger, 'sqlite-double-open', { stage: 'read-tempfile' })
   try {
     const tables = db
       .prepare(

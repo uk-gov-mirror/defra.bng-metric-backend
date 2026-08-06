@@ -12,7 +12,7 @@ import {
 import { findFeature } from '../utilities/features/find-feature.js'
 import { outOfScopeDistinctivenessError } from './out-of-scope-error.js'
 import { featureEditPayload, projectFeatureIdParams } from './shared-params.js'
-import { logPerfEvidence, utf8Bytes } from '../common/helpers/perf-evidence.js'
+import { logPerf, utf8Bytes } from '../common/helpers/perf-evidence.js'
 
 /**
  * @openapi
@@ -107,7 +107,7 @@ function createGetFeatureRoute({ path, documentKey }) {
       // Evidence (Item W4 — single-feature reads fetch the whole document): the
       // entire project JSONB was shipped and deserialised to return one feature.
       // docBytes is the whole document; featureBytes is what the caller gets.
-      logPerfEvidence(request.logger, 'single-feature-full-doc', {
+      logPerf(request.logger, 'single-feature-full-doc', {
         documentKey,
         docBytes: utf8Bytes(JSON.stringify(rows[0].project ?? {})),
         featureBytes: utf8Bytes(JSON.stringify(found.feature))
