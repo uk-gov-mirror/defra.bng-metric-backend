@@ -18,6 +18,7 @@ import {
 } from '../../db/schema/index.js'
 import { setProjectHabitatData } from '../../db/persist-project.js'
 import { EPSG_BNG } from '../../validation/baseline/geopackage-constants.js'
+import { logPerfEvidence } from '../../common/helpers/perf-evidence.js'
 
 /** Cap rows per INSERT to keep statement size bounded for PostGIS bulk loads. */
 const INSERT_BATCH_SIZE = 500
@@ -50,8 +51,15 @@ function transformToBngMultiGeomSql(geomJson, sourceSrid) {
   return sql`ST_Multi(ST_Transform(ST_SetSRID(ST_GeomFromGeoJSON(${geomJson}), ${sourceSrid}), ${sql.raw(String(EPSG_BNG))}))`
 }
 
-function geometryRowValues(projectId, row) {
+function geometryRowValues(projectId, row, serStats) {
   const geomJson = JSON.stringify(row.geometry)
+  // Evidence (Item 7): reuse the already-computed geomJson to size the third
+  // serialization (per-row on persist) without re-stringifying — the caller
+  // logs the accumulated total once the transaction is built.
+  if (serStats) {
+    serStats.count += 1
+    serStats.bytes += Buffer.byteLength(geomJson)
+  }
   return sql`(
     ${row.featureId}::uuid,
     ${projectId}::uuid,
@@ -60,10 +68,12 @@ function geometryRowValues(projectId, row) {
   )`
 }
 
-async function insertGeometryRowsBatched(tx, table, projectId, rows) {
+async function insertGeometryRowsBatched(tx, table, projectId, rows, serStats) {
   for (let i = 0; i < rows.length; i += INSERT_BATCH_SIZE) {
     const batch = rows.slice(i, i + INSERT_BATCH_SIZE)
-    const values = batch.map((row) => geometryRowValues(projectId, row))
+    const values = batch.map((row) =>
+      geometryRowValues(projectId, row, serStats)
+    )
     await tx.execute(sql`
       INSERT INTO ${table} (id, project_id, ref, geom)
       VALUES ${sql.join(values, sql`, `)}
@@ -71,8 +81,12 @@ async function insertGeometryRowsBatched(tx, table, projectId, rows) {
   }
 }
 
-async function insertRedLineRow(tx, table, projectId, row) {
+async function insertRedLineRow(tx, table, projectId, row, serStats) {
   const geomJson = JSON.stringify(row.geometry)
+  if (serStats) {
+    serStats.count += 1
+    serStats.bytes += Buffer.byteLength(geomJson)
+  }
   await tx.execute(sql`
     INSERT INTO ${table} (id, project_id, geom)
     VALUES (
@@ -107,38 +121,49 @@ async function assertProjectExistsForUpdate(tx, projectId, sub) {
   }
 }
 
-async function persistGeometryLayers(tx, projectId, geometries, featureTables) {
+async function persistGeometryLayers(
+  tx,
+  projectId,
+  geometries,
+  featureTables,
+  serStats
+) {
   if (geometries.redLine) {
     await insertRedLineRow(
       tx,
       featureTables.redLine,
       projectId,
-      geometries.redLine
+      geometries.redLine,
+      serStats
     )
   }
   await insertGeometryRowsBatched(
     tx,
     featureTables.habitats,
     projectId,
-    geometries.habitats
+    geometries.habitats,
+    serStats
   )
   await insertGeometryRowsBatched(
     tx,
     featureTables.hedgerows,
     projectId,
-    geometries.hedgerows
+    geometries.hedgerows,
+    serStats
   )
   await insertGeometryRowsBatched(
     tx,
     featureTables.watercourses,
     projectId,
-    geometries.watercourses
+    geometries.watercourses,
+    serStats
   )
   await insertGeometryRowsBatched(
     tx,
     featureTables.trees,
     projectId,
-    geometries.trees ?? []
+    geometries.trees ?? [],
+    serStats
   )
 }
 
@@ -156,7 +181,7 @@ async function runPersistTransaction(
   projectId,
   document,
   geometries,
-  { projectDocumentKey, featureTables, sub }
+  { projectDocumentKey, featureTables, sub, serStats }
 ) {
   await drizzle.transaction(async (tx) => {
     await tx.execute(
@@ -165,7 +190,13 @@ async function runPersistTransaction(
 
     await assertProjectExistsForUpdate(tx, projectId, sub)
     await deleteExistingFeatureRows(tx, projectId, featureTables)
-    await persistGeometryLayers(tx, projectId, geometries, featureTables)
+    await persistGeometryLayers(
+      tx,
+      projectId,
+      geometries,
+      featureTables,
+      serStats
+    )
     await updateProjectDocumentSection(
       tx,
       projectId,
@@ -214,15 +245,26 @@ async function persistBaseline(
     featureTables = FEATURE_TABLE_SETS[projectDocumentKey]
   }
 ) {
+  const serStats = { count: 0, bytes: 0 }
   try {
     await runPersistTransaction(drizzle, projectId, document, geometries, {
       projectDocumentKey,
       featureTables,
-      sub
+      sub,
+      serStats
     })
   } catch (err) {
     rethrowPersistError(err, uploadLabel)
   }
+
+  // Evidence (Item 7 — geometries re-serialized to JSON three times): third and
+  // final site — every geometry is JSON.stringify'd again per row on persist.
+  // serializedBytes is the geometry text shipped to Postgres for the inserts.
+  logPerfEvidence(logger, 'geom-serialized-thrice', {
+    stage: 'persist',
+    featureCount: serStats.count,
+    serializedBytes: serStats.bytes
+  })
 
   logger.info(
     `${uploadLabel}: persisted ${uploadLabel} for projectId ${projectId} from uploadId ${uploadId}`

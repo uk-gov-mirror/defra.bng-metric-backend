@@ -19,6 +19,10 @@ import { sql } from 'drizzle-orm'
 import { users, relationships, roles } from './schema/index.js'
 import { insertLoginAudit } from './persist-login-audit.js'
 import { parseRelationships, parseRoles } from '../services/defra-id/claims.js'
+import { createLogger } from '../common/helpers/logging/logger.js'
+import { logPerfEvidence, perfNow } from '../common/helpers/perf-evidence.js'
+
+const logger = createLogger()
 
 function userValues(claims) {
   return {
@@ -108,11 +112,26 @@ async function persistSession(drizzle, claims) {
   const rels = parseRelationships(claims)
   const userRoles = parseRoles(claims)
 
+  const txStart = perfNow()
   await drizzle.transaction(async (tx) => {
     await upsertUser(tx, claims)
     await upsertRelationships(tx, claims.sub, rels)
     await upsertRoles(tx, claims.sub, userRoles)
     await insertLoginAudit(tx, claims)
+  })
+
+  // Evidence (Item W6 — login-time serial upserts): each relationship and role
+  // is upserted in its own awaited round trip inside the login transaction, so
+  // the round-trip count (and txMs) grows with the user's relationship/role
+  // counts. PII-safe: only counts and timing are logged, never claims (see the
+  // PII-safety note at the top of this file). ONE_ROUND_TRIP covers the single
+  // user upsert and the single audit insert that bracket the loops.
+  const BRACKETING_ROUND_TRIPS = 2
+  logPerfEvidence(logger, 'login-serial-upserts', {
+    relationshipCount: rels.length,
+    roleCount: userRoles.length,
+    upsertRoundTrips: BRACKETING_ROUND_TRIPS + rels.length + userRoles.length,
+    txMs: Math.round(perfNow() - txStart)
   })
 }
 

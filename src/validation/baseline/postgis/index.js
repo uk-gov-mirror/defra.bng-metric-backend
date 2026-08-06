@@ -4,6 +4,12 @@ import { fileURLToPath } from 'node:url'
 
 import { ERROR_CODES } from '../errors.js'
 import { ERROR_BUILDERS } from './error-builders.js'
+import { createLogger } from '../../../common/helpers/logging/logger.js'
+import {
+  logPerfEvidence,
+  perfNow,
+  utf8Bytes
+} from '../../../common/helpers/perf-evidence.js'
 
 // Single-statement validation: the layer features are passed in as parallel
 // arrays of GeoJSON strings, parsed and reprojected to EPSG:27700 inside the
@@ -18,6 +24,8 @@ const englandGeoJson = JSON.parse(
   )
 )
 const ENGLAND_GEOMETRY_JSON = JSON.stringify(englandGeoJson.geometry)
+
+const logger = createLogger()
 
 // Tolerance / threshold constants — interpolated into CHECK_QUERY at module
 // load time (they're static JS values, not user input, so direct string
@@ -493,6 +501,16 @@ function buildArrays(layers) {
 export async function validateBaselineLayersPostgis(pool, layers) {
   const { layerNames, idxs, props, geoms, srids } = buildArrays(layers)
 
+  // Evidence (Item 7 — geometries re-serialized to JSON three times): this is
+  // the first of the three sites — the validation param array. serializedBytes
+  // is the payload of geometry text shipped to Postgres for the checks.
+  logPerfEvidence(logger, 'geom-serialized-thrice', {
+    stage: 'validate',
+    featureCount: geoms.length,
+    serializedBytes: utf8Bytes(geoms)
+  })
+
+  const queryStart = perfNow()
   const { rows } = await pool.query(CHECK_QUERY, [
     layerNames,
     idxs,
@@ -501,6 +519,25 @@ export async function validateBaselineLayersPostgis(pool, layers) {
     srids,
     ENGLAND_GEOMETRY_JSON
   ])
+  const queryMs = Math.round(perfNow() - queryStart)
+
+  // Evidence (Item 6 — heavy PostGIS validation is one giant inline statement):
+  // every geometry check runs as a single awaited query with repeated
+  // ST_MakeValid / ST_Union / overlay work across all layers.
+  logPerfEvidence(logger, 'postgis-inline-heavy-query', {
+    totalFeatures: geoms.length,
+    queryMs
+  })
+
+  // Evidence (Item 3 — O(n^2) parcel-overlap self-join, no spatial index): the
+  // overlap CTE joins the `areas` parcels against themselves, so Postgres
+  // evaluates ~N^2/2 candidate pairs with no GiST index — quadratic in parcels.
+  const areaFeatureCount = layerNames.filter((name) => name === 'areas').length
+  logPerfEvidence(logger, 'parcel-overlap-on2', {
+    areaFeatureCount,
+    estimatedOverlapPairs: (areaFeatureCount * (areaFeatureCount - 1)) / 2,
+    queryMs
+  })
 
   const byCode = new Map()
   for (const row of rows) {

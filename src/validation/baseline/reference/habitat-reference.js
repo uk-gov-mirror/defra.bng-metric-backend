@@ -19,6 +19,13 @@ import {
   distinctivenessByHabitatType,
   distinctivenessScores
 } from './habitat-distinctiveness.js'
+import { createLogger } from '../../../common/helpers/logging/logger.js'
+import {
+  logPerfEvidence,
+  perfNow
+} from '../../../common/helpers/perf-evidence.js'
+
+const logger = createLogger()
 
 // Hedgerow scores differ from area scores at V.Low (1 vs 0) per the statutory
 // metric tables, so the hedgerow path must read its own scores table.
@@ -111,11 +118,22 @@ function getHabitatsByBroad(options = {}) {
  * @returns {string[]}
  */
 function getAreaBroadHabitats() {
+  const start = perfNow()
   const broads = new Set()
   for (const row of getHabitatsByBroad({ areaOnly: true })) {
     broads.add(row.broadHabitat)
   }
-  return [...broads].sort((a, b) => a.localeCompare(b))
+  const result = [...broads].sort((a, b) => a.localeCompare(b))
+  // Evidence (Item W5 — reference lookups recompute per request, no cache
+  // headers): this Set build + sort over static, per-build data runs on every
+  // call. The /reference/* route handlers set no Cache-Control/ETag, so the
+  // work repeats per request (buildMicros = microseconds for one rebuild).
+  logPerfEvidence(logger, 'reference-recompute', {
+    getter: 'areaBroadHabitats',
+    resultCount: result.length,
+    buildMicros: Math.round((perfNow() - start) * 1000)
+  })
+  return result
 }
 
 /**
@@ -149,6 +167,7 @@ function getAreaHabitatTypes(broadHabitat) {
  * @returns {Object<string, Array<{ name: string, distinctiveness: string, distinctivenessScore: number }>>}
  */
 function getAreaHabitatTypesByBroad() {
+  const start = perfNow()
   const grouped = {}
   for (const row of getHabitatsByBroad({ areaOnly: true })) {
     const list = grouped[row.broadHabitat] ?? []
@@ -162,6 +181,14 @@ function getAreaHabitatTypesByBroad() {
   for (const broad of Object.keys(grouped)) {
     grouped[broad].sort((a, b) => a.name.localeCompare(b.name))
   }
+  // Evidence (Item W5 — reference lookups recompute per request): the full
+  // group-by + per-broad sort is rebuilt on every /reference/habitat-types-by-
+  // broad call, with no response cache headers to let clients skip it.
+  logPerfEvidence(logger, 'reference-recompute', {
+    getter: 'areaHabitatTypesByBroad',
+    resultCount: Object.keys(grouped).length,
+    buildMicros: Math.round((perfNow() - start) * 1000)
+  })
   return grouped
 }
 

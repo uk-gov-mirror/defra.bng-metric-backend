@@ -30,6 +30,7 @@ import {
   GEOPACKAGE_METRIC,
   VALIDATION_CATEGORY
 } from '../common/helpers/metric-names.js'
+import { logPerfEvidence, perfNow } from '../common/helpers/perf-evidence.js'
 
 const logger = createLogger()
 
@@ -152,13 +153,30 @@ async function runFullValidation(
   const localPath = path.join(tmpDir, BASELINE_UPLOAD_TEMP_FILENAME)
 
   try {
+    // Evidence (Item 1 — entire pipeline runs inline): time each awaited/
+    // synchronous stage so the logs show how long a single upload pins the
+    // request handler (and, via readBaselineGeoPackage, blocks the event loop).
+    const pipelineStart = perfNow()
     await fs.writeFile(localPath, buffer)
+    const afterWrite = perfNow()
     const layers = readBaselineGeoPackage(localPath)
+    const afterRead = perfNow()
     const result = await validateBaselineLayers(
       layers,
       pgPool,
       config.projectDocumentKey
     )
+    const afterValidate = perfNow()
+    logPerfEvidence(logger, 'pipeline-inline', {
+      uploadId,
+      stage: 'validate',
+      fileSizeBytes: fileSize ?? null,
+      tempWriteMs: Math.round(afterWrite - pipelineStart),
+      gpkgReadMs: Math.round(afterRead - afterWrite),
+      postgisValidateMs: Math.round(afterValidate - afterRead),
+      elapsedMs: Math.round(afterValidate - pipelineStart),
+      valid: result.valid
+    })
     if (!result.valid) {
       logger.info(
         `${config.routeName} - rejected uploadId ${uploadId}: ${result.errors
@@ -173,6 +191,7 @@ async function runFullValidation(
     logger.info(`${config.routeName} - accepted uploadId ${uploadId}`)
     await metricsCounter(GEOPACKAGE_METRIC.validationSucceeded)
     if (projectId) {
+      const saveStart = perfNow()
       const errorResponse = await saveBaselineForProject(
         { drizzle, pgPool, logger },
         projectId,
@@ -181,6 +200,14 @@ async function runFullValidation(
         h,
         config
       )
+      // Evidence (Item 1): sizing + enrichment + persist stage, still inline on
+      // the same handler; totalMs is the whole request-handler time.
+      logPerfEvidence(logger, 'pipeline-inline', {
+        uploadId,
+        stage: 'save',
+        saveMs: Math.round(perfNow() - saveStart),
+        totalMs: Math.round(perfNow() - pipelineStart)
+      })
       if (errorResponse) {
         return errorResponse
       } else {

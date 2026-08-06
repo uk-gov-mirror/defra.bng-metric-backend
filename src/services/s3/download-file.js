@@ -3,6 +3,11 @@ import { GetObjectCommand } from '@aws-sdk/client-s3'
 import { config } from '../../config.js'
 import { createS3Client } from './s3-client.js'
 import { createLogger } from '../../common/helpers/logging/logger.js'
+import {
+  logPerfEvidence,
+  perfNow,
+  heapUsedMb
+} from '../../common/helpers/perf-evidence.js'
 
 const logger = createLogger()
 
@@ -72,12 +77,27 @@ async function downloadFile(
     )
   }
 
+  const bufferStart = perfNow()
+  const heapBeforeMb = heapUsedMb()
   try {
     const chunks = []
     for await (const chunk of response.Body) {
       chunks.push(chunk)
     }
     const buffer = Buffer.concat(chunks)
+    // Evidence (Item 4 — whole file buffered into memory, up to 100 MB): the S3
+    // object is accumulated into a single Buffer held for the request lifecycle
+    // (later coexisting with the temp-file copy and parsed GeoJSON arrays).
+    // heapDeltaMb shows how much resident memory one download adds; a few
+    // concurrent large uploads multiply this against a single-process instance.
+    const heapAfterMb = heapUsedMb()
+    logPerfEvidence(logger, 'file-buffered-memory', {
+      bytes: buffer.byteLength,
+      heapBeforeMb,
+      heapAfterMb,
+      heapDeltaMb: heapAfterMb - heapBeforeMb,
+      bufferMs: Math.round(perfNow() - bufferStart)
+    })
     logger.info(
       `Downloaded S3 object - bucket: ${bucket}, key: ${key}, size: ${buffer.byteLength} bytes`
     )

@@ -29,6 +29,7 @@ import {
   validateHedgerows,
   validateWatercourses
 } from './geopackage-internals.js'
+import { logPerfEvidence, perfNow } from '../../common/helpers/perf-evidence.js'
 
 const logger = createLogger()
 
@@ -107,6 +108,10 @@ function validateGpkg(buffer) {
 
   try {
     db = new Database(buffer)
+    // Evidence (Item 5 — file parsed as SQLite twice): first open, of the
+    // in-memory buffer, for the format/validation gate. Pairs with the
+    // read-tempfile open below; both fire once per upload.
+    logPerfEvidence(logger, 'sqlite-double-open', { stage: 'validate-buffer' })
   } catch (err) {
     // better-sqlite3 does not throw in the constructor for most invalid buffers
     // (it defers the error to the first operation). This catch covers the cases
@@ -330,7 +335,9 @@ function readLayer(db, tableName) {
   const colRows = db.prepare(`PRAGMA table_info(${quotedTable})`).all()
   const propColumns = colRows.map((c) => c.name).filter((n) => n !== geomColumn)
 
+  const fetchStart = perfNow()
   const rows = db.prepare(`SELECT * FROM ${quotedTable}`).all()
+  const afterFetch = perfNow()
   const features = []
   for (const row of rows) {
     const blob = row[geomColumn]
@@ -359,6 +366,17 @@ function readLayer(db, tableName) {
       nativeSrid: featureSrid
     })
   }
+  // Evidence (Item 2 — all features + geometries loaded synchronously): the
+  // whole table is pulled into memory with .all(), then every blob is decoded to
+  // GeoJSON in this synchronous loop. better-sqlite3 is synchronous, so the
+  // event loop is blocked for fetchMs + decodeMs, growing with the row count.
+  logPerfEvidence(logger, 'sync-feature-load', {
+    table: tableName,
+    rowCount: rows.length,
+    featureCount: features.length,
+    fetchMs: Math.round(perfNow() - fetchStart),
+    decodeMs: Math.round(perfNow() - afterFetch)
+  })
   return { nativeSrid: tableSrid, features }
 }
 
@@ -380,6 +398,11 @@ function readLayer(db, tableName) {
  */
 export function readBaselineGeoPackage(filePath) {
   const db = new Database(filePath, { readonly: true, fileMustExist: true })
+  // Evidence (Item 5 — file parsed as SQLite twice): second open, this time of
+  // the temp-file copy on disk, to read features. The same bytes were already
+  // opened once as an in-memory buffer for the validation gate (validateGpkg).
+  // See the MERGE NOTE at the top of this file.
+  logPerfEvidence(logger, 'sqlite-double-open', { stage: 'read-tempfile' })
   try {
     const tables = db
       .prepare(

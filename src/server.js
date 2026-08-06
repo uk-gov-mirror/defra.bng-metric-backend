@@ -6,6 +6,7 @@ import { postgres } from './plugins/postgres.js'
 import { authJwt } from './plugins/auth-jwt.js'
 import { router } from './plugins/router.js'
 import { requestLogger } from './common/helpers/logging/request-logger.js'
+import { rateEvidence } from './plugins/rate-evidence.js'
 import { failAction } from './common/helpers/fail-action.js'
 import { pulse } from './common/helpers/pulse.js'
 import { requestTracing } from './common/helpers/request-tracing.js'
@@ -51,6 +52,9 @@ async function createServer() {
   //                  default is set and before the router adds routes)
   await server.register([
     requestLogger,
+    // rateEvidence - observability only (spike Item W3): logs uncapped
+    // per-client request bursts. It does NOT rate-limit anything.
+    rateEvidence,
     requestTracing,
     requestCorrelation,
     secureContext,

@@ -11,6 +11,7 @@ import {
 import { HABITAT_STATUS } from '../../services/baseline/calculate-habitat-statuses.js'
 import { stripConditionPrefix } from './condition.js'
 import { summarizeFeatureSetUnitsTotals } from '../features/feature-set-units.js'
+import { logPerfEvidence, perfNow } from '../../common/helpers/perf-evidence.js'
 import {
   SQ_METRES_PER_HECTARE,
   METRES_PER_KM,
@@ -306,6 +307,15 @@ export function enrichBaselineDocumentWithUnits(
   baselineDocument,
   logger = NO_OP_LOGGER
 ) {
+  // Evidence (Item 8 — engine enrichment loops every feature inline): count the
+  // features enriched and time the whole pass. Linear cost, but it runs on the
+  // same synchronous request handler, stacking on top of parse + validate.
+  const enrichStart = perfNow()
+  const enrichedFeatureCount =
+    (baselineDocument?.habitats?.length ?? 0) +
+    (baselineDocument?.trees?.length ?? 0) +
+    (baselineDocument?.hedgerows?.length ?? 0) +
+    (baselineDocument?.watercourses?.length ?? 0)
   // Area-habitat parcels and individual trees enrich on the same path: a tree is
   // a special area habitat whose notional area (set on import from the per-size
   // reference) feeds the area-habitat unit calculation, with the engine resolving
@@ -342,5 +352,9 @@ export function enrichBaselineDocumentWithUnits(
   )
 
   summarizeFeatureSetUnitsTotals(baselineDocument)
+  logPerfEvidence(logger, 'enrich-inline-loop', {
+    enrichedFeatureCount,
+    enrichMs: Math.round(perfNow() - enrichStart)
+  })
   return baselineDocument
 }
