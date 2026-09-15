@@ -4875,7 +4875,7 @@
       "enumValues": [],
       "constraints": [],
       "openMap": false,
-      "description": "Trading-rules unit figures by feature module. Area habitats today; hedgerows and watercourses follow the same pattern."
+      "description": "Trading-rules unit figures by feature module. Area habitats and watercourses today; hedgerows follow the same pattern."
     },
     {
       "path": "postIntervention.tradingRules.areaHabitats",
@@ -5074,6 +5074,138 @@
       "constraints": [],
       "openMap": false,
       "description": "Units available to the Low band once the Medium surplus is carried down: the Medium surplus plus the Low net change. Deliberately NOT the Statutory Metric's \"Cumulative surplus of units\", which cancels the Medium deficit against the Medium surplus first and so is always lower by the size of that deficit — 23.1012 against 32.5222 on the worked example. The trading rules do not permit that cancellation: a surplus in one broad habitat cannot make good a deficit in another. This figure is therefore not safe to judge compliance on alone; the Medium band has to be accounted for in its own right."
+    },
+    {
+      "path": "postIntervention.tradingRules.watercourses",
+      "type": "object",
+      "required": false,
+      "nullable": false,
+      "emptyStringAllowed": false,
+      "enumValues": [],
+      "constraints": [],
+      "openMap": false,
+      "description": "Watercourse trading-rules unit figures (BMD-995). Unit values only; Met/Not-met statuses are derived separately (BMD-1002)."
+    },
+    {
+      "path": "postIntervention.tradingRules.watercourses.habitats",
+      "type": "array<object>",
+      "required": false,
+      "nullable": false,
+      "emptyStringAllowed": false,
+      "enumValues": [],
+      "constraints": [],
+      "openMap": false,
+      "description": "Per-habitat-type net unit change across baseline and post-intervention watercourses (AC1). One entry per unique watercourse type, ordered by type."
+    },
+    {
+      "path": "postIntervention.tradingRules.watercourses.habitats[]",
+      "type": "object",
+      "required": false,
+      "nullable": false,
+      "emptyStringAllowed": false,
+      "enumValues": [],
+      "constraints": [],
+      "openMap": false,
+      "description": "Net unit change for a single watercourse type across baseline and post-intervention (BMD-995 AC1)."
+    },
+    {
+      "path": "postIntervention.tradingRules.watercourses.habitats[].habitatType",
+      "type": "string",
+      "required": true,
+      "nullable": false,
+      "emptyStringAllowed": false,
+      "enumValues": [],
+      "constraints": [],
+      "openMap": false,
+      "description": "Watercourse type the net unit change is aggregated for (e.g. \"Ditches\", \"Canals\", \"Culvert\")."
+    },
+    {
+      "path": "postIntervention.tradingRules.watercourses.habitats[].distinctiveness",
+      "type": "string",
+      "required": true,
+      "nullable": false,
+      "emptyStringAllowed": false,
+      "enumValues": [],
+      "constraints": [],
+      "openMap": false,
+      "description": "Distinctiveness band resolved by bng-library/metric for the watercourse type (e.g. \"Medium\", \"Low\")."
+    },
+    {
+      "path": "postIntervention.tradingRules.watercourses.habitats[].netUnitChange",
+      "type": "number",
+      "required": true,
+      "nullable": false,
+      "emptyStringAllowed": false,
+      "enumValues": [],
+      "constraints": [],
+      "openMap": false,
+      "description": "Net unit change for the watercourse type: summed retained + created + enhanced post-intervention units (attributed to the proposed habitat) minus summed baseline units. Positive is a surplus, negative a deficit."
+    },
+    {
+      "path": "postIntervention.tradingRules.watercourses.medium",
+      "type": "object",
+      "required": false,
+      "nullable": false,
+      "emptyStringAllowed": false,
+      "enumValues": [],
+      "constraints": [],
+      "openMap": false,
+      "description": "Medium-distinctiveness watercourse band aggregates (AC2, AC3)."
+    },
+    {
+      "path": "postIntervention.tradingRules.watercourses.medium.surplus",
+      "type": "number",
+      "required": true,
+      "nullable": false,
+      "emptyStringAllowed": false,
+      "enumValues": [],
+      "constraints": [],
+      "openMap": false,
+      "description": "Total surplus for Medium-distinctiveness watercourses: the sum of Medium net unit changes greater than zero (AC2). Zero or positive."
+    },
+    {
+      "path": "postIntervention.tradingRules.watercourses.medium.deficit",
+      "type": "number",
+      "required": true,
+      "nullable": false,
+      "emptyStringAllowed": false,
+      "enumValues": [],
+      "constraints": [],
+      "openMap": false,
+      "description": "Total deficit for Medium-distinctiveness watercourses: the sum of Medium net unit changes less than zero (AC3). Zero or negative."
+    },
+    {
+      "path": "postIntervention.tradingRules.watercourses.low",
+      "type": "object",
+      "required": false,
+      "nullable": false,
+      "emptyStringAllowed": false,
+      "enumValues": [],
+      "constraints": [],
+      "openMap": false,
+      "description": "Low-distinctiveness watercourse band aggregates (AC4, AC5)."
+    },
+    {
+      "path": "postIntervention.tradingRules.watercourses.low.netUnitChange",
+      "type": "number",
+      "required": true,
+      "nullable": false,
+      "emptyStringAllowed": false,
+      "enumValues": [],
+      "constraints": [],
+      "openMap": false,
+      "description": "Net change in units for Low-distinctiveness watercourses: the sum of all Low net unit changes regardless of sign (AC4)."
+    },
+    {
+      "path": "postIntervention.tradingRules.watercourses.low.cumulativeAvailability",
+      "type": "number",
+      "required": true,
+      "nullable": false,
+      "emptyStringAllowed": false,
+      "enumValues": [],
+      "constraints": [],
+      "openMap": false,
+      "description": "Cumulative availability of units for Low-distinctiveness watercourses: the Medium surplus (AC2) plus the Low net change (AC4), per AC5."
     }
   ]
 }

@@ -417,8 +417,64 @@ const postInterventionWatercourseSchema = Joi.object({
 }).description('A post-intervention watercourse (linear) feature.')
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Top-level post-intervention data schema
+// Trading rules (BMD-995)
 // ──────────────────────────────────────────────────────────────────────────────
+
+const watercourseTradingRulesHabitatSchema = Joi.object({
+  habitatType: Joi.string()
+    .required()
+    .description(
+      'Watercourse type the net unit change is aggregated for (e.g. "Ditches", "Canals", "Culvert").'
+    ),
+  distinctiveness: Joi.string()
+    .required()
+    .description(
+      'Distinctiveness band resolved by bng-library/metric for the watercourse type (e.g. "Medium", "Low").'
+    ),
+  netUnitChange: Joi.number()
+    .required()
+    .description(
+      'Net unit change for the watercourse type: summed retained + created + enhanced post-intervention units (attributed to the proposed habitat) minus summed baseline units. Positive is a surplus, negative a deficit.'
+    )
+}).description(
+  'Net unit change for a single watercourse type across baseline and post-intervention (BMD-995 AC1).'
+)
+
+const watercourseTradingRulesSchema = Joi.object({
+  habitats: Joi.array()
+    .items(watercourseTradingRulesHabitatSchema)
+    .description(
+      'Per-habitat-type net unit change across baseline and post-intervention watercourses (AC1). One entry per unique watercourse type, ordered by type.'
+    ),
+  medium: Joi.object({
+    surplus: Joi.number()
+      .required()
+      .description(
+        'Total surplus for Medium-distinctiveness watercourses: the sum of Medium net unit changes greater than zero (AC2). Zero or positive.'
+      ),
+    deficit: Joi.number()
+      .required()
+      .description(
+        'Total deficit for Medium-distinctiveness watercourses: the sum of Medium net unit changes less than zero (AC3). Zero or negative.'
+      )
+  }).description(
+    'Medium-distinctiveness watercourse band aggregates (AC2, AC3).'
+  ),
+  low: Joi.object({
+    netUnitChange: Joi.number()
+      .required()
+      .description(
+        'Net change in units for Low-distinctiveness watercourses: the sum of all Low net unit changes regardless of sign (AC4).'
+      ),
+    cumulativeAvailability: Joi.number()
+      .required()
+      .description(
+        'Cumulative availability of units for Low-distinctiveness watercourses: the Medium surplus (AC2) plus the Low net change (AC4), per AC5.'
+      )
+  }).description('Low-distinctiveness watercourse band aggregates (AC4, AC5).')
+}).description(
+  'Watercourse trading-rules unit figures (BMD-995). Unit values only; Met/Not-met statuses are derived separately (BMD-1002).'
+)
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Trading rules
@@ -481,9 +537,10 @@ const areaHabitatTradingRulesSchema = Joi.object({
 )
 
 const tradingRulesSchema = Joi.object({
-  areaHabitats: areaHabitatTradingRulesSchema
+  areaHabitats: areaHabitatTradingRulesSchema,
+  watercourses: watercourseTradingRulesSchema
 }).description(
-  'Trading-rules unit figures by feature module. Area habitats today; hedgerows and watercourses follow the same pattern.'
+  'Trading-rules unit figures by feature module. Area habitats and watercourses today; hedgerows follow the same pattern.'
 )
 
 const postInterventionDataSchema = Joi.object({

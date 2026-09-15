@@ -159,6 +159,30 @@ describe('#buildWarehouseModel — keys', () => {
   })
 })
 
+const WAREHOUSE_TABLES = [
+  'project',
+  'project_site',
+  'project_units',
+  'project_details',
+  'feature_set',
+  'feature_set_units',
+  'feature_set_habitat_sizes',
+  'feature_set_trading_rules',
+  'feature_set_trading_rules_area_habitat_types',
+  'feature_set_trading_rules_area_broad_habitats',
+  'feature_set_trading_rules_watercourse_habitats',
+  'baseline_red_line',
+  'baseline_habitats',
+  'baseline_trees',
+  'baseline_hedgerows',
+  'baseline_watercourses',
+  'post_intervention_red_line',
+  'post_intervention_habitats',
+  'post_intervention_trees',
+  'post_intervention_hedgerows',
+  'post_intervention_watercourses'
+]
+
 describe('#buildWarehouseModel — column layout', () => {
   it('flattens the post-intervention baseline/proposed blocks by prefix', () => {
     const names = columnNames('post_intervention_habitats')
@@ -184,6 +208,29 @@ describe('#buildWarehouseModel — column layout', () => {
     expect(names).toContain('document_key')
   })
 
+  it('keeps trading-rules leaves off feature_set (they are their own tables)', () => {
+    const names = columnNames('feature_set')
+
+    expect(names.some((name) => name.includes('trading_rules'))).toBe(false)
+    expect(columnNames('feature_set_trading_rules')).toEqual(
+      expect.arrayContaining([
+        'watercourses_medium_surplus',
+        'watercourses_medium_deficit',
+        'watercourses_low_net_unit_change',
+        'watercourses_low_cumulative_availability'
+      ])
+    )
+    expect(
+      columnNames('feature_set_trading_rules_watercourse_habitats')
+    ).toEqual(
+      expect.arrayContaining([
+        'habitat_type',
+        'distinctiveness',
+        'net_unit_change'
+      ])
+    )
+  })
+
   it('keeps properties as a single jsonb column', () => {
     const properties = tableByName
       .get('baseline_habitats')
@@ -198,28 +245,7 @@ describe('#buildWarehouseModel — column layout', () => {
   })
 
   it('builds the expected table set', () => {
-    expect(model.tables.map((table) => table.table)).toEqual([
-      'project',
-      'project_site',
-      'project_units',
-      'project_details',
-      'feature_set',
-      'feature_set_units',
-      'feature_set_habitat_sizes',
-      'feature_set_trading_rules',
-      'feature_set_trading_rules_area_habitat_types',
-      'feature_set_trading_rules_area_broad_habitats',
-      'baseline_red_line',
-      'baseline_habitats',
-      'baseline_trees',
-      'baseline_hedgerows',
-      'baseline_watercourses',
-      'post_intervention_red_line',
-      'post_intervention_habitats',
-      'post_intervention_trees',
-      'post_intervention_hedgerows',
-      'post_intervention_watercourses'
-    ])
+    expect(model.tables.map((table) => table.table)).toEqual(WAREHOUSE_TABLES)
   })
 })
 
@@ -238,6 +264,12 @@ describe('#renderErdMarkdown', () => {
   })
 
   it('uses one-to-many for arrays and one-to-one for singletons', () => {
+    expect(markdown).toContain(
+      '    feature_set ||--o| feature_set_trading_rules : "has"'
+    )
+    expect(markdown).toContain(
+      '    feature_set_trading_rules ||--o{ feature_set_trading_rules_watercourse_habitats : "contains"'
+    )
     expect(markdown).toContain(
       '    feature_set ||--o{ baseline_habitats : "contains"'
     )
@@ -262,6 +294,7 @@ describe('#renderErdMarkdown', () => {
     expect(markdown).toContain('`{projectId}:site`')
     expect(markdown).toContain('`{projectId}:{documentKey}`')
     expect(markdown).toContain('`{projectId}:{documentKey}:habitatSizes`')
+    expect(markdown).toContain('`{projectId}:postIntervention:tradingRules`')
   })
 
   it('states the update and stability semantics', () => {

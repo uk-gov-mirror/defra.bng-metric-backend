@@ -129,9 +129,9 @@ export const baselineUnitsTotalsSchema = Joi.object({
     )
 }).description('Baseline biodiversity unit totals, summed across features.')
 
-// Trading rules. The per-habitat net-unit-change item is module- and
-// band-agnostic so the hedgerow and watercourse modules can reuse it; the band
-// aggregates and the per-module wrapper live in the post-intervention schema.
+// Trading rules. The per-habitat net-unit-change item is the area-habitat shape:
+// habitat type plus the broad-habitat keys that module trades on. Watercourses
+// use a smaller item of their own in the post-intervention schema.
 export const tradingRulesHabitatNetChangeSchema = Joi.object({
   habitatType: Joi.string()
     .required()

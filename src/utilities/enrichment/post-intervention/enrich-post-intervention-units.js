@@ -18,6 +18,7 @@ import { enrichPostInterventionAreaHabitat } from './enrich-post-intervention-ar
 import { enrichPostInterventionHedgerowWithUnits } from './enrich-post-intervention-hedgerow.js'
 import { enrichPostInterventionWatercourseWithUnits } from './enrich-post-intervention-watercourse.js'
 import { enrichPostInterventionAreaTradingRules } from './enrich-post-intervention-area-trading-rules.js'
+import { enrichPostInterventionWatercourseTradingRules } from './enrich-post-intervention-trading-rules.js'
 
 /**
  * Mutates `postInterventionDocument`: for each feature, enriches the `proposed`
@@ -86,6 +87,10 @@ export function enrichPostInterventionDocumentWithUnits(
     postInterventionDocument,
     baselineDocument,
     logger
+  )
+  enrichPostInterventionWatercourseTradingRules(
+    postInterventionDocument,
+    baselineDocument?.watercourses ?? []
   )
   return postInterventionDocument
 }

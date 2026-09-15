@@ -154,10 +154,12 @@ const TABLES = Object.freeze([
     parent: { table: 'feature_set', column: 'feature_set_id', type: 'text' },
     highlight: [
       'area_habitats_medium_surplus',
-      'area_habitats_low_cumulative_availability'
+      'area_habitats_low_cumulative_availability',
+      'watercourses_medium_surplus',
+      'watercourses_low_cumulative_availability'
     ],
     description:
-      'Trading-rules unit figures for the post-intervention document (area habitats today; hedgerows and watercourses follow). Absent on the baseline feature set.'
+      'Trading-rules unit figures for the post-intervention document (area habitats and watercourses today; hedgerows follow). Absent on the baseline feature set.'
   },
   {
     table: 'feature_set_trading_rules_area_habitat_types',
@@ -198,6 +200,25 @@ const TABLES = Object.freeze([
     highlight: ['broad_habitat', 'net_unit_change'],
     description:
       'Cumulative Medium-band net unit change per broad habitat, with intertidal sediment and intertidal hard structures merged into one row: the trading rules treat those two as one broad habitat.'
+  },
+  {
+    table: 'feature_set_trading_rules_watercourse_habitats',
+    sources: ['postIntervention.tradingRules.watercourses.habitats[]'],
+    primaryKey: {
+      column: 'trading_rules_watercourse_habitat_id',
+      type: 'text',
+      derivation:
+        '`{projectId}:postIntervention:tradingRules:watercourses:{habitatType}`'
+    },
+    parent: {
+      table: 'feature_set_trading_rules',
+      column: 'trading_rules_id',
+      type: 'text'
+    },
+    many: true,
+    highlight: ['habitat_type', 'distinctiveness', 'net_unit_change'],
+    description:
+      'Per-habitat-type watercourse net unit change (BMD-995 AC1). One row per unique watercourse type.'
   }
 ])
 
