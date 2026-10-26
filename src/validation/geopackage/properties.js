@@ -42,6 +42,8 @@ export const PROP_KEYS = {
     'Baseline_Encroachment_into_riparian_zone'
   ],
   retentionCategory: ['Retention Category', 'Retention_Category'],
+  // BNG Service template area habitats only: the legacy template has none.
+  irreplaceable: ['Irreplaceable Habitat'],
   area: ['Area', 'Shape_Area'],
   length: ['Length', 'Shape_Length'],
   // Survey / provenance / planning metadata columns shared (with minor

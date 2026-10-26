@@ -138,6 +138,9 @@ const habitatSchema = Joi.object({
   retentionCategory: Joi.string()
     .allow(null, '')
     .description(RETENTION_CATEGORY_DESCRIPTION),
+  irreplaceable: Joi.boolean().description(
+    'Whether the habitat is irreplaceable, from the BNG Service template\'s Irreplaceable Habitat column: true for "Yes", false for "No" or a blank cell (BMD-1083). Absent on a legacy upload, whose template has no such column.'
+  ),
   area: Joi.number()
     .allow(null)
     .description(

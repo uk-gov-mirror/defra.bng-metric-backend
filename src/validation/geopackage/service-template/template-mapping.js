@@ -21,6 +21,8 @@ import {
  * have those names; Habitat Ref is the one renamed. A column the service does
  * not use is dropped, so it never reaches the stored document: distinctiveness
  * is derived from the habitat type, and sizes are measured from the geometry.
+ * An area habitat's Irreplaceable Habitat is read as its `irreplaceable`
+ * status (irreplaceable.js).
  * The Red Line Boundary is read for its geometry alone.
  *
  * Individual trees (BMD-1172) and vertical area habitats (BMD-1084) are not
@@ -70,10 +72,11 @@ const LAYER_COLUMNS = {
       'Baseline Broad Habitat Type',
       'Baseline Habitat Type',
       'Proposed Broad Habitat Type',
-      'Proposed Habitat Type'
+      'Proposed Habitat Type',
+      // Read as `irreplaceable`; BMD-1176 refuses a file with one that is.
+      'Irreplaceable Habitat'
     ),
-    // BMD-1176 refuses a file with an irreplaceable habitat.
-    ...dropped('Irreplaceable Habitat', 'Area')
+    ...dropped('Area')
   ],
   hedgerows: [
     ...COMMON_COLUMNS,

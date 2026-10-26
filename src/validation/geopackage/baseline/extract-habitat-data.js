@@ -20,6 +20,7 @@ import {
   buildExtractResult
 } from '../extract-shared.js'
 import { stripConditionPrefix } from '../../../utilities/enrichment/shared/condition.js'
+import { irreplaceableField } from '../irreplaceable.js'
 
 // Survey / provenance / planning metadata columns common to the Habitats,
 // Hedgerows and Rivers layers. These are single shared columns (no
@@ -76,6 +77,7 @@ function buildHabitat(feature, keys) {
     condition: stripConditionPrefix(pickProp(props, keys.condition)),
     strategicSignificance: pickProp(props, keys.strategicSignificance),
     retentionCategory: pickProp(props, PROP_KEYS.retentionCategory),
+    ...irreplaceableField(props),
     rawDistinctiveness: pickProp(props, keys.rawDistinctiveness),
     ...pickProps(props, METADATA_PROPS),
     properties: props

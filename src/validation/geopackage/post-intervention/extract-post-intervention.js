@@ -32,6 +32,7 @@ import {
   retentionCategoryFromProps
 } from './extract-post-intervention-sub-objects.js'
 import { buildPostInterventionTree } from './extract-post-intervention-trees.js'
+import { irreplaceableField } from '../irreplaceable.js'
 
 /**
  * The ref is the Parcel Ref as stored: trimmed and truncated
@@ -98,6 +99,7 @@ function buildPostInterventionHabitat(feature) {
       featureId,
       ref,
       retentionCategory: retentionCategoryFromProps(props),
+      ...irreplaceableField(props),
       area: null,
       sizeSquareMetres: null,
       units: null,

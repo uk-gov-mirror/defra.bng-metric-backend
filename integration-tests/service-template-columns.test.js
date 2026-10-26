@@ -137,7 +137,6 @@ function withDroppedColumnsChanged() {
     'Baseline Distinctiveness': 'V.High',
     'Proposed Distinctiveness': 'V.High',
     'Spatial risk category': 'Far from site',
-    'Irreplaceable Habitat': '',
     Area: 1,
     Length: 1,
     'Baseline Length': 1
@@ -267,6 +266,38 @@ describeServiceTemplate(
         // are not read yet.
         expect(document.trees).toEqual([])
         expect(document).not.toHaveProperty('verticalHabitats')
+      }
+    })
+
+    it('reads each area habitat’s Irreplaceable Habitat, at both stages', () => {
+      for (const [, documentName] of STAGES) {
+        for (const habitat of stored[documentName].habitats) {
+          expect(habitat.irreplaceable, habitat.ref).toBe(false)
+        }
+      }
+    })
+
+    it('reads "Yes" as irreplaceable, and "No" or blank as not', async () => {
+      const project = await createProject('Service template irreplaceable')
+      const fixture = 'service-template/irreplaceable-area-habitat.gpkg'
+      const yes = new Set(
+        rowsOf(fixturePath(fixture), 'Area Habitats Baseline')
+          .filter((row) => row['Irreplaceable Habitat'] === 'Yes')
+          .map((row) => row.fid)
+      )
+      expect(yes.size).toBeGreaterThan(0)
+
+      const res = await callPostInterventionValidate(
+        await uploadFixture(fixture),
+        { projectId: project.id }
+      )
+
+      expect(res.result).toEqual({ valid: true, errors: [] })
+      const { baseline } = await fetchProject(project.id)
+      for (const habitat of baseline.habitats) {
+        expect(habitat.irreplaceable, habitat.ref).toBe(
+          yes.has(habitat.properties.fid)
+        )
       }
     })
 

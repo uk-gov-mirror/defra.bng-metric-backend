@@ -1370,6 +1370,17 @@
       "description": "Retention category from the GeoPackage."
     },
     {
+      "path": "baseline.habitats[].irreplaceable",
+      "type": "boolean",
+      "required": false,
+      "nullable": false,
+      "emptyStringAllowed": false,
+      "enumValues": [],
+      "constraints": [],
+      "openMap": false,
+      "description": "Whether the habitat is irreplaceable, from the BNG Service template's Irreplaceable Habitat column: true for \"Yes\", false for \"No\" or a blank cell (BMD-1083). Absent on a legacy upload, whose template has no such column."
+    },
+    {
       "path": "baseline.habitats[].area",
       "type": "number",
       "required": false,
@@ -1632,6 +1643,17 @@
       "constraints": [],
       "openMap": false,
       "description": "Retention category from the GeoPackage."
+    },
+    {
+      "path": "baseline.trees[].irreplaceable",
+      "type": "boolean",
+      "required": false,
+      "nullable": false,
+      "emptyStringAllowed": false,
+      "enumValues": [],
+      "constraints": [],
+      "openMap": false,
+      "description": "Whether the habitat is irreplaceable, from the BNG Service template's Irreplaceable Habitat column: true for \"Yes\", false for \"No\" or a blank cell (BMD-1083). Absent on a legacy upload, whose template has no such column."
     },
     {
       "path": "baseline.trees[].status",
@@ -3160,6 +3182,17 @@
       "constraints": ["uuid"],
       "openMap": false,
       "description": "The featureId of the baseline feature this post-intervention feature is linked to by its parent_uuid in a BNG Service template file, whatever its Retention Category. Absent when it names no parent, and on every feature of a legacy upload."
+    },
+    {
+      "path": "postIntervention.habitats[].irreplaceable",
+      "type": "boolean",
+      "required": false,
+      "nullable": false,
+      "emptyStringAllowed": false,
+      "enumValues": [],
+      "constraints": [],
+      "openMap": false,
+      "description": "Whether the habitat is irreplaceable, from the BNG Service template's Irreplaceable Habitat column: true for \"Yes\", false for \"No\" or a blank cell (BMD-1083). Absent on a legacy upload, whose template has no such column."
     },
     {
       "path": "postIntervention.habitats[].baseline",

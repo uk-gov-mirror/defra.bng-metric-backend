@@ -62,6 +62,7 @@ describe('reading a BNG Service template file', () => {
       'Baseline Habitat Type': 'Other lowland acid grassland',
       'Baseline Condition': 'Fairly Poor',
       'Baseline Strategic Significance': 'Low',
+      'Irreplaceable Habitat': 'No',
       Comment: null,
       feature_uuid: 'de9d1450-90f7-584a-9710-edf7ec189de4'
     })

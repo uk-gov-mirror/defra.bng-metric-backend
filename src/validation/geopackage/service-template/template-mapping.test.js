@@ -66,7 +66,6 @@ describe('the BNG Service template 1.0 mapping', () => {
     ['areas', 'Proposed Distinctiveness'],
     ['areas', 'Spatial risk category'],
     ['areas', 'Area'],
-    ['areas', 'Irreplaceable Habitat'],
     ['hedgerows', 'Length'],
     ['hedgerows', 'Baseline Length'],
     ['watercourses', 'Length'],

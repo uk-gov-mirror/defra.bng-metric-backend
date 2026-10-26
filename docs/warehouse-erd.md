@@ -12,7 +12,7 @@ and what those keys guarantee.
 
 Column-level detail — descriptions, constraints, nullability — lives in the [`data dictionary`](https://github.com/DEFRA/bng-metric-backend/blob/main/data-dictionary/data-dictionary.md). This page covers structure and identity.
 
-**22 tables**, mapping 367 schema fields.
+**22 tables**, mapping 370 schema fields.
 
 ## Diagram
 
@@ -481,7 +481,7 @@ Red Line Boundary defining the site extent (baseline). At most one per document.
 
 ### `baseline_habitats`
 
-habitats in the baseline document. 26 column(s) mapped from the JSON document.
+habitats in the baseline document. 27 column(s) mapped from the JSON document.
 
 | Column                                     | Type      | Key | JSON path                                                 | Notes                                                                            |
 | ------------------------------------------ | --------- | --- | --------------------------------------------------------- | -------------------------------------------------------------------------------- |
@@ -496,6 +496,7 @@ habitats in the baseline document. 26 column(s) mapped from the JSON document.
 | `condition_score`                          | `numeric` |     | `baseline.habitats[].conditionScore`                      |                                                                                  |
 | `strategic_significance`                   | `text`    |     | `baseline.habitats[].strategicSignificance`               |                                                                                  |
 | `retention_category`                       | `text`    |     | `baseline.habitats[].retentionCategory`                   |                                                                                  |
+| `irreplaceable`                            | `text`    |     | `baseline.habitats[].irreplaceable`                       |                                                                                  |
 | `area`                                     | `numeric` |     | `baseline.habitats[].area`                                |                                                                                  |
 | `size_square_metres`                       | `numeric` |     | `baseline.habitats[].sizeSquareMetres`                    |                                                                                  |
 | `status`                                   | `text`    |     | `baseline.habitats[].status`                              |                                                                                  |
@@ -516,7 +517,7 @@ habitats in the baseline document. 26 column(s) mapped from the JSON document.
 
 ### `baseline_trees`
 
-trees in the baseline document. 30 column(s) mapped from the JSON document.
+trees in the baseline document. 31 column(s) mapped from the JSON document.
 
 | Column                                     | Type      | Key | JSON path                                              | Notes                                                                            |
 | ------------------------------------------ | --------- | --- | ------------------------------------------------------ | -------------------------------------------------------------------------------- |
@@ -527,6 +528,7 @@ trees in the baseline document. 30 column(s) mapped from the JSON document.
 | `condition_score`                          | `numeric` |     | `baseline.trees[].conditionScore`                      |                                                                                  |
 | `strategic_significance`                   | `text`    |     | `baseline.trees[].strategicSignificance`               |                                                                                  |
 | `retention_category`                       | `text`    |     | `baseline.trees[].retentionCategory`                   |                                                                                  |
+| `irreplaceable`                            | `text`    |     | `baseline.trees[].irreplaceable`                       |                                                                                  |
 | `status`                                   | `text`    |     | `baseline.trees[].status`                              |                                                                                  |
 | `site_name`                                | `text`    |     | `baseline.trees[].siteName`                            |                                                                                  |
 | `survey_date`                              | `text`    |     | `baseline.trees[].surveyDate`                          |                                                                                  |
@@ -640,7 +642,7 @@ Red Line Boundary defining the site extent (postIntervention). At most one per d
 
 ### `post_intervention_habitats`
 
-habitats in the postIntervention document. 34 column(s) mapped from the JSON document.
+habitats in the postIntervention document. 35 column(s) mapped from the JSON document.
 
 | Column                                       | Type      | Key | JSON path                                                            | Notes                                                                            |
 | -------------------------------------------- | --------- | --- | -------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
@@ -654,6 +656,7 @@ habitats in the postIntervention document. 34 column(s) mapped from the JSON doc
 | `status`                                     | `text`    |     | `postIntervention.habitats[].status`                                 |                                                                                  |
 | `invalid_enhancement`                        | `text`    |     | `postIntervention.habitats[].invalidEnhancement`                     |                                                                                  |
 | `parent_feature_id`                          | `uuid`    |     | `postIntervention.habitats[].parentFeatureId`                        |                                                                                  |
+| `irreplaceable`                              | `text`    |     | `postIntervention.habitats[].irreplaceable`                          |                                                                                  |
 | `baseline_type`                              | `text`    |     | `postIntervention.habitats[].baseline.type`                          |                                                                                  |
 | `baseline_broad_type`                        | `text`    |     | `postIntervention.habitats[].baseline.broadType`                     |                                                                                  |
 | `baseline_condition`                         | `text`    |     | `postIntervention.habitats[].baseline.condition`                     |                                                                                  |
