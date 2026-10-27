@@ -125,6 +125,41 @@ describe('rejectInvalidEnhancements', () => {
     expect(hedgerow.proposed).toEqual({ type: null, condition: null })
   })
 
+  // G-6's allowed-moves table, which the metric checks before it calculates
+  // anything, refuses these moves, though a time-to-target table has years
+  // for each.
+  it.each([
+    [
+      'another Medium hedgerow type',
+      { type: 'Native hedgerow with trees', condition: 'Moderate' },
+      { type: 'Species-rich native hedgerow', condition: 'Good' },
+      ENHANCEMENT_RULE.MEDIUM_HEDGEROW
+    ],
+    [
+      'a hedgerow without the bank or ditch (G-6 AT14 against Y14)',
+      {
+        type: 'Line of trees - associated with bank or ditch',
+        condition: 'Moderate'
+      },
+      { type: 'Native hedgerow with trees', condition: 'Good' },
+      ENHANCEMENT_RULE.LOW_HEDGEROW
+    ]
+  ])(
+    'nulls an enhancement of a hedgerow into %s, which the metric does not allow',
+    (_, baseline, proposed, rule) => {
+      const hedgerow = {
+        retentionCategory: 'Enhanced',
+        baseline,
+        proposed: { ...proposed }
+      }
+
+      expect(rejectInvalidEnhancements({ hedgerows: [hedgerow] })).toBe(1)
+      expect(hedgerow.invalidEnhancement).toBe(rule)
+      expect(hedgerow.status).toBe('Incomplete')
+      expect(hedgerow.proposed).toEqual({ type: null, condition: null })
+    }
+  )
+
   it('leaves a valid enhancement as it is', () => {
     const habitat = enhancedHabitat({
       baseline: { type: 'Modified grassland', condition: 'Moderate' },

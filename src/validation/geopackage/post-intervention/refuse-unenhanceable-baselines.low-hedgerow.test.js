@@ -1,45 +1,30 @@
 // AC5: a Low hedgerow in Good condition whose type the metric's G-6 data lets
-// become no Medium hedgerow. Every Low hedgerow has a Medium target in that
-// data today, so no real hedgerow breaks the rule; bng-library tests the rule
-// against altered data. Here the library is made to report it, to show the
-// backend refuses the file and passes the rule on.
+// become no Medium hedgerow. Line of trees - associated with bank or ditch is
+// the one: its only Medium target, Native hedgerow with trees, is refused by
+// G-6's allowed-moves table (AT14), though the time-to-target table gives the
+// move 12 years (Y14).
 
-import { describe, expect, it, vi } from 'vitest'
+import { UNENHANCEABLE_BASELINE } from 'bng-library/metric'
+import { describe, expect, it } from 'vitest'
 
 import { ERROR_CODES } from '../errors.js'
 import { refuseUnenhanceableBaselines } from './refuse-unenhanceable-baselines.js'
 
 const LINE_OF_TREES_BANK = 'Line of trees - associated with bank or ditch'
-const RULE = 'low-hedgerow-good-no-medium-target'
 
-vi.mock('bng-library/metric', async (importOriginal) => {
-  const actual = await importOriginal()
+function enhancedHedgerow(type, condition) {
   return {
-    ...actual,
-    unenhanceableBaseline: (kind, baseline) =>
-      kind === actual.ENHANCEMENT_KIND.hedgerow &&
-      baseline?.habitat === LINE_OF_TREES_BANK &&
-      baseline?.condition === 'Good'
-        ? {
-            rule: actual.UNENHANCEABLE_BASELINE
-              .LOW_HEDGEROW_GOOD_NO_MEDIUM_TARGET,
-            mvsOnly: true,
-            distinctiveness: 'Low'
-          }
-        : actual.unenhanceableBaseline(kind, baseline)
+    ref: 'HG1',
+    retentionCategory: 'Enhanced',
+    baseline: { type, condition },
+    proposed: { type: 'Native hedgerow with trees', condition: 'Good' }
   }
-})
+}
 
 describe('refuseUnenhanceableBaselines, AC5', () => {
-  it('refuses an enhanced Low hedgerow in Good condition with no Medium target', () => {
+  it(`refuses an enhanced ${LINE_OF_TREES_BANK} in Good condition`, () => {
     const error = refuseUnenhanceableBaselines({
-      hedgerows: [
-        {
-          ref: 'HG1',
-          retentionCategory: 'Enhanced',
-          baseline: { type: LINE_OF_TREES_BANK, condition: '3. Good' }
-        }
-      ]
+      hedgerows: [enhancedHedgerow(LINE_OF_TREES_BANK, '3. Good')]
     })
 
     expect(error.code).toBe(ERROR_CODES.BASELINE_NOT_ENHANCEABLE)
@@ -50,9 +35,28 @@ describe('refuseUnenhanceableBaselines, AC5', () => {
         habitat_type: LINE_OF_TREES_BANK,
         condition: 'Good',
         distinctiveness: 'Low',
-        rule: RULE,
+        rule: UNENHANCEABLE_BASELINE.LOW_HEDGEROW_GOOD_NO_MEDIUM_TARGET,
         mvsOnly: true
       }
     ])
   })
+
+  it(`accepts an enhanced ${LINE_OF_TREES_BANK} in Moderate condition, whose condition can still improve`, () => {
+    expect(
+      refuseUnenhanceableBaselines({
+        hedgerows: [enhancedHedgerow(LINE_OF_TREES_BANK, 'Moderate')]
+      })
+    ).toBeNull()
+  })
+
+  it.each(['Native hedgerow', 'Line of trees'])(
+    'accepts an enhanced %s in Good condition, which can become a Medium hedgerow',
+    (type) => {
+      expect(
+        refuseUnenhanceableBaselines({
+          hedgerows: [enhancedHedgerow(type, 'Good')]
+        })
+      ).toBeNull()
+    }
+  )
 })
